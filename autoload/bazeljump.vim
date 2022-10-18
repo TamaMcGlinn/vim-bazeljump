@@ -34,7 +34,7 @@ fu! bazeljump#GetJumpForTarget(target) abort
   if l:line == 0
     let l:jump = {'file': v:null} 
   else
-    let l:jump = GetBazelLoadTarget(getline(l:line))
+    let l:jump = bazeljump#GetBazelLoadTarget(getline(l:line))
     if l:jump is v:null
       throw "Unable to find target"
     endif
@@ -45,7 +45,7 @@ endfunction
 
 fu! bazeljump#JumpToBazelDefinition() abort
   let l:line = getline('.')
-  let l:jump = GetBazelLoadTarget(l:line)
+  let l:jump = bazeljump#GetBazelLoadTarget(l:line)
   if l:jump is v:null
     if l:line =~# '^ *\([a-zA-Z_]* = \[\)\?"[a-zA-Z_/:.]*"'
       let l:target = substitute(l:line, '^[^/:]*', '', '')
@@ -64,11 +64,11 @@ fu! bazeljump#JumpToBazelDefinition() abort
       endif
     elseif l:line =~# '^[a-zA-Z_]*('
       let l:target = substitute(l:line, '(.*', '', '')
-      let l:jump = GetJumpForTarget(l:target)
+      let l:jump = bazeljump#GetJumpForTarget(l:target)
     elseif l:line =~# '^ *[a-zA-Z_]* = [a-zA-Z_]*'
       let l:target = substitute(l:line, '^ *[a-zA-Z_]* = ', '', '')
       let l:target = substitute(l:target, '\(^[a-zA-Z_]*\).*$', '\1', '')
-      let l:jump = GetJumpForTarget(l:target)
+      let l:jump = bazeljump#GetJumpForTarget(l:target)
     else
       throw "Unrecognized line"
     endif
@@ -77,6 +77,6 @@ fu! bazeljump#JumpToBazelDefinition() abort
     call better_gf#Openfile(l:jump['file'])
   endif
   if !(l:jump['target'] is v:null)
-    call JumpToTargetWithinFile(l:jump['target'])
+    call bazeljump#JumpToTargetWithinFile(l:jump['target'])
   endif
 endfunction
