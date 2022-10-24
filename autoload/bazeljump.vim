@@ -74,6 +74,9 @@ fu! bazeljump#JumpToBazelDefinition() abort
     endif
   endif
   if !(l:jump['file'] is v:null)
+    if !(filereadable(l:jump['file']))
+      throw "No such file " . l:jump['file']
+    endif
     call better_gf#Openfile(l:jump['file'])
   endif
   if !(l:jump['target'] is v:null)
