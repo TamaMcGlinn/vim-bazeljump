@@ -5,15 +5,20 @@
 " if the load statement imports multiple targets then the returned target is v:null
 fu! bazeljump#GetBazelLoadTarget(line) abort
   let l:line = a:line
-  if l:line =~# '^load("//'
+  if l:line =~# '^ *load *( *"'
     if l:line =~# '\.bzl", "[^"]*")'
       let l:target = substitute(l:line, '.*\.bzl", "\([^"]*\)").*', '\1', '')
     else
       let l:target = v:null
     endif
-    let l:line = substitute(l:line, '^load("//\([^"]*\)".*', '\1', '')
+    if l:line =~# '^ *load *( *"//'
+      let l:relative_dir = "./"
+    else
+      let l:relative_dir = "./" .. expand("%:h") .. "/"
+    endif
+    let l:line = substitute(l:line, '^ *load *( *"\(//\)\?\([^"]*\)".*', '\2', '')
     if l:line =~# '^[^:]*:[^.]*\.bzl'
-      let l:file = substitute(l:line, ':', '/', '')
+      let l:file = substitute(l:line, ':', l:relative_dir, '')
       return { 'file': l:file, 'target': l:target }
     else
       throw "Unrecognized bazel file: " .. l:line
@@ -30,7 +35,7 @@ fu! bazeljump#JumpToTargetWithinFile(target) abort
 endfunction
 
 fu! bazeljump#GetJumpForTarget(target) abort
-  let l:line = search('^load("[^"]*".*"' .. a:target .. '".*)', 'n')
+  let l:line = search('^ *load("[^"]*".*"' .. a:target .. '".*)', 'n')
   if l:line == 0
     let l:jump = {'file': v:null} 
   else
@@ -62,7 +67,7 @@ fu! bazeljump#JumpToBazelDefinition() abort
       else
         throw "Unrecognized target " . l:target
       endif
-    elseif l:line =~# '^[a-zA-Z_]*('
+    elseif l:line =~# '^ *[a-zA-Z_]*('
       let l:target = substitute(l:line, '(.*', '', '')
       let l:jump = bazeljump#GetJumpForTarget(l:target)
     elseif l:line =~# '^ *[a-zA-Z_]* = [a-zA-Z_]*'
