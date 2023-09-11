@@ -6,8 +6,11 @@
 fu! bazeljump#GetBazelLoadTarget(line) abort
   let l:line = a:line
   if l:line =~# '^ *load *( *"'
-    if l:line =~# '\.bzl", "[^"]*")'
-      let l:target = substitute(l:line, '.*\.bzl", "\([^"]*\)").*', '\1', '')
+    " echom "load for " . l:line
+    if l:line =~# '\.bzl"\(, *"[^"]*"\)*)'
+      " get the first target from a load line
+      let l:target = substitute(l:line, '^.*\.bzl", *"\([^"]*\)".*$', '\1', '')
+      " echom "target: " . l:target
     else
       let l:target = v:null
     endif
@@ -16,14 +19,16 @@ fu! bazeljump#GetBazelLoadTarget(line) abort
     else
       let l:relative_dir = "./" .. expand("%:h") .. "/"
     endif
+    " echom "reldir: " . l:relative_dir
     let l:line = substitute(l:line, '^ *load *( *"\(//\)\?\([^"]*\)".*', '\2', '')
     if l:line =~# '^[^:]*:[^.]*\.bzl'
-      let l:file = substitute(l:line, ':', l:relative_dir, '')
+      let l:file = l:relative_dir . substitute(l:line, ':', '/', '')
       return { 'file': l:file, 'target': l:target }
     else
       throw "Unrecognized bazel file: " .. l:line
     endif
   else
+    " echom "no load here " . l:line
     return v:null
   endif
 endfunction
@@ -39,17 +44,20 @@ fu! bazeljump#GetJumpForTarget(target) abort
   if l:line == 0
     let l:jump = {'file': v:null} 
   else
+    " echom "Found load for " . a:target . " at line: " . l:line
     let l:jump = bazeljump#GetBazelLoadTarget(getline(l:line))
     if l:jump is v:null
       throw "Unable to find target"
     endif
   endif
   let l:jump['target'] = a:target
+  " echom l:jump['target'] . " is in file " . l:jump['file']
   return l:jump
 endfunction
 
 fu! bazeljump#JumpToBazelDefinition() abort
   let l:line = getline('.')
+  " echom "Getting loadtarget for " . l:line
   let l:jump = bazeljump#GetBazelLoadTarget(l:line)
   if l:jump is v:null
     if l:line =~# '^ *\([a-zA-Z_]* = \[\)\?"[a-zA-Z_/:.]*"'
@@ -69,6 +77,7 @@ fu! bazeljump#JumpToBazelDefinition() abort
       endif
     elseif l:line =~# '^ *[a-zA-Z_]*('
       let l:target = substitute(l:line, '(.*', '', '')
+      " echom "Target deduced to be " . l:target
       let l:jump = bazeljump#GetJumpForTarget(l:target)
     elseif l:line =~# '^ *[a-zA-Z_]* = [a-zA-Z_]*'
       let l:target = substitute(l:line, '^ *[a-zA-Z_]* = ', '', '')
