@@ -60,7 +60,7 @@ fu! bazeljump#JumpToBazelDefinition() abort
   " echom "Getting loadtarget for " . l:line
   let l:jump = bazeljump#GetBazelLoadTarget(l:line)
   if l:jump is v:null
-    if l:line =~# '^ *\([a-zA-Z_]* = \[\)\?"[a-zA-Z_/:.]*"'
+    if l:line =~# '^ *\([a-zA-Z0-9_]* = \[\)\?"[a-zA-Z0-9_/:.]*",\?'
       let l:target = substitute(l:line, '^[^/:]*', '', '')
       let l:target = substitute(l:target, '[,"\]]*$', '', '')
       if l:target =~# '^//'
@@ -75,13 +75,13 @@ fu! bazeljump#JumpToBazelDefinition() abort
       else
         throw "Unrecognized target " . l:target
       endif
-    elseif l:line =~# '^ *[a-zA-Z_]*('
+    elseif l:line =~# '^ *[a-zA-Z0-9_]*('
       let l:target = substitute(l:line, '(.*', '', '')
       " echom "Target deduced to be " . l:target
       let l:jump = bazeljump#GetJumpForTarget(l:target)
-    elseif l:line =~# '^ *[a-zA-Z_]* = [a-zA-Z_]*'
-      let l:target = substitute(l:line, '^ *[a-zA-Z_]* = ', '', '')
-      let l:target = substitute(l:target, '\(^[a-zA-Z_]*\).*$', '\1', '')
+    elseif l:line =~# '^ *[a-zA-Z0-9_]* = [a-zA-Z0-9_]*'
+      let l:target = substitute(l:line, '^ *[a-zA-Z0-9_]* = ', '', '')
+      let l:target = substitute(l:target, '\(^[a-zA-Z0-9_]*\).*$', '\1', '')
       let l:jump = bazeljump#GetJumpForTarget(l:target)
     else
       throw "Unrecognized line"
